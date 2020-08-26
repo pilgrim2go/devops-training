@@ -1,6 +1,5 @@
-# Jenkins CI VM
+# Vagrant Docker Development Pipeline VM
 
-This project spins up a VM running Jenkins CI, and then you can create a job to run a local Ansible playbook which will be run on the local machine via a Jenkins job.
 
 ## Quick Start Guide
 
