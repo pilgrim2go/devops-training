@@ -1,0 +1,19 @@
+- hosts: all
+  vars:
+      docker_apps_location: /usr/local/opt/docker
+  roles:
+    - geerlingguy.docker
+
+- hosts: dev
+  vars:
+      docker_apps_location: /usr/local/opt/docker
+  roles:
+    - geerlingguy.git    
+  # tasks:
+
+  #   - name: Ensure app folder exists.
+  #     file: "path={{ docker_apps_location }} state=directory"
+
+  #   - name: Copy docker-compose to server.
+  #     copy: "src=docker-compose.yml dest={{ docker_apps_location }}"
+
