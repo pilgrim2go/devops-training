@@ -1,0 +1,71 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    aws_profile: default
+    aws_region: us-west-2 # Oregon
+    aws_ec2_ami: ami-0a634ae95e11c6f91 # Ubuntu 1804
+    id: "web-app"
+    sec_group: "{{ id }}-sec"
+    vpc_id: vpc-0d42a7ad13ccd83a9 # existing VPC
+
+    instances:
+      - name: nc.dev
+        group: "dev"
+      - name: nc.registry
+        group: "registry"
+      - name: nc.prod
+        group: "prod"
+
+
+  tasks:
+    - name: Create security group
+      ec2_group:
+        name: "{{ sec_group }}"
+        description: "Sec group for app {{ id }}"
+        vpc_id: "{{ vpc_id }}"
+        region: "{{ aws_region }}"
+
+        rules:
+          - proto: tcp
+            ports:
+              - 22
+            cidr_ip: 0.0.0.0/0
+            rule_desc: allow all on ssh port
+          - proto: tcp
+            ports:
+              - 4002
+            cidr_ip: 0.0.0.0/0
+            rule_desc: allow all on ssh port            
+          - proto: tcp
+            ports:
+              - 5000
+            cidr_ip: 0.0.0.0/0
+            rule_desc: allow all on ssh port            
+
+      register: result_sec_group
+
+    - name: Provision EC2 instances.
+      ec2:
+        key_name: "{{ item.ssh_key | default('aws-t') }}"
+        instance_tags:
+          Name: "{{ item.name | default('') }}"
+          Application: docker_pipeline_aws
+          inventory_group: "{{ item.group | default('') }}"
+          inventory_host: "{{ item.name | default('') }}"
+        group_id: "{{ result_sec_group.group_id }}"
+        instance_type: "{{ item.type | default('t2.micro')}}"
+        image: "{{ aws_ec2_ami }}"
+        wait: yes
+        wait_timeout: 500
+        exact_count: 1
+        vpc_subnet_id: subnet-07439bd9625a577a9
+        assign_public_ip: yes        
+        count_tag:
+          inventory_host: "{{ item.name | default('') }}"
+        profile: "{{ aws_profile }}"
+        region: "{{ aws_region }}"
+      register: created_instances
+      with_items: "{{ instances }}"
