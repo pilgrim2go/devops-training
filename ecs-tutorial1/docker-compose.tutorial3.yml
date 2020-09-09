@@ -1,0 +1,18 @@
+version: '3'
+services:
+  ecsdemo-nodejs:
+    image: brentley/ecsdemo-nodejs
+    # ports:
+    #   - "3000:3000"
+  ecsdemo-crystal:
+    image: brentley/ecsdemo-crystal
+    # ports:
+    #   - "3000:3000"
+  ecsdemo-frontend:
+    environment:
+      - CRYSTAL_URL=http://ecsdemo-crystal:3000/crystal
+      - NODEJS_URL=http://ecsdemo-nodejs:3000
+
+    image: brentley/ecsdemo-frontend
+    ports:
+      - "3000:3000"
