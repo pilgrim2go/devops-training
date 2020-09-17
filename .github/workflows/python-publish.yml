@@ -14,4 +14,4 @@ jobs:
         host: ${{ secrets.SERVER_IP }}
         username: ubuntu
         key: ${{ secrets.SERVER_SSH_KEY }}
-        script: /opt/ansible && bash deploy.sh
+        script: cd /opt/ansible && bash deploy.sh
