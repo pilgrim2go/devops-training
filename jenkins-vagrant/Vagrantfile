@@ -1,0 +1,73 @@
+# to make sure the jenkins node is created before the other nodes, we
+# have to force a --no-parallel execution.
+ENV['VAGRANT_NO_PARALLEL'] = 'yes'
+
+config_jenkins_fqdn = 'jenkins10.example.com'
+config_jenkins_ip   = '10.10.10.110'
+config_ubuntu_fqdn  = "ubuntu10.#{config_jenkins_fqdn}"
+config_ubuntu_ip    = '10.10.10.111'
+
+# link to the gitlab-vagrant environment.
+config_gitlab_fqdn  = 'gitlab.example.com'
+config_gitlab_ip    = '10.10.9.99'
+
+Vagrant.configure('2') do |config|
+  config.vm.box = 'ubuntu/bionic64'
+
+  config.vm.provider :virtualbox do |vb|
+    vb.linked_clone = true
+    vb.memory = 2048
+    vb.cpus = 2
+    vb.customize ['modifyvm', :id, '--cableconnected1', 'on']
+  end
+
+  config.vm.define :jenkins do |config|
+    config.vm.hostname = config_jenkins_fqdn
+    config.vm.network :private_network, ip: config_jenkins_ip, libvirt__forward_mode: 'route', libvirt__dhcp_enabled: false
+    config.vm.provision :shell, inline: "echo '#{config_ubuntu_ip} #{config_ubuntu_fqdn}' >>/etc/hosts"
+    config.vm.provision :shell, inline: "echo '#{config_gitlab_ip} #{config_gitlab_fqdn}' >>/etc/hosts"
+    # config.vm.provision :shell, path: 'provision-mailhog.sh'
+    # config.vm.provision :shell, path: 'provision.sh'
+    # config.vm.provision :shell, path: 'provision-example-jobs.sh'
+    # config.vm.provision :shell, path: 'provision-example-test-jenkins-gitlab-plugin.sh'
+    # # config.vm.provision :reload
+    # config.vm.provision :shell, path: 'provision-summary.sh'
+  end
+
+  config.vm.define :ubuntu do |config|
+    config.vm.hostname = config_ubuntu_fqdn
+    config.vm.network :private_network, ip: config_ubuntu_ip, libvirt__forward_mode: 'route', libvirt__dhcp_enabled: false
+    config.vm.provision :shell, inline: "echo '#{config_jenkins_ip} #{config_jenkins_fqdn}' >>/etc/hosts"
+    config.vm.provision :shell, inline: "echo '#{config_gitlab_ip} #{config_gitlab_fqdn}' >>/etc/hosts"
+    # config.vm.provision :shell, path: 'provision-ubuntu.sh'
+  end
+
+  
+
+#   config.trigger.before :up do |trigger|
+#     trigger.only_on = 'jenkins'
+#     trigger.run = {
+#       inline: '''bash -euc \'
+# certs=(
+#   ../windows-domain-controller-vagrant/tmp/ExampleEnterpriseRootCA.der
+#   ../gitlab-vagrant/tmp/gitlab.example.com-crt.der
+#   ../gitlab-vagrant/tmp/gitlab-jenkins-impersonation-token.txt
+# )
+# for cert_path in "${certs[@]}"; do
+#   if [ -f $cert_path ]; then
+#     mkdir -p tmp
+#     cp $cert_path tmp
+#   fi
+# done
+# \'
+# '''
+#     }
+#   end
+
+
+#   config.trigger.after :up do |trigger|
+#     trigger.only_on = ['ubuntu']
+
+#     trigger.run = {inline: "vagrant ssh -c 'cat /vagrant/tmp/*.ssh_known_hosts | sudo tee /etc/ssh/ssh_known_hosts' jenkins10"}
+#   end
+end
