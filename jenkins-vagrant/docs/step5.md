@@ -169,13 +169,19 @@ apt-get install -y --no-install-recommends jenkins
 pushd /var/lib/jenkins
 #### wait for initialization to finish.
 bash -c 'while [ "$(xmlstarlet sel -t -v /hudson/installStateName config.xml 2>/dev/null)" != "NEW" ]; do sleep 1; done'
+
 systemctl stop jenkins
+
 
 chmod 751 /var/cache/jenkins
 mv config.xml{,.orig}
 # remove the xml 1.1 declaration because xmlstarlet does not support it... and xml 1.1 is not really needed.
 tail -n +2 config.xml.orig >config.xml
-# disable security.
+```
+
+##### disable security.
+
+```
 # see https://wiki.jenkins-ci.org/display/JENKINS/Disable+security
 xmlstarlet edit --inplace -u '/hudson/useSecurity' -v 'false' config.xml
 xmlstarlet edit --inplace -d '/hudson/authorizationStrategy' config.xml
@@ -193,7 +199,10 @@ xmlstarlet edit --inplace -u '/hudson/installStateName' -v 'RUNNING' config.xml
 sed -i -E 's,^(JAVA_ARGS="-.+),\1\nJAVA_ARGS="$JAVA_ARGS -Dhudson.model.Slave.workspaceRoot=w",' /etc/default/jenkins
 # bind to localhost.
 sed -i -E 's,^(JENKINS_ARGS="-.+),\1\nJENKINS_ARGS="$JENKINS_ARGS --httpListenAddress=127.0.0.1",' /etc/default/jenkins
-# configure access log.
+```
+
+####  configure access log.
+```
 # NB this is useful for testing whether static files are really being handled by nginx.
 sed -i -E 's,^(JENKINS_ARGS="-.+),\1\nJENKINS_ARGS="$JENKINS_ARGS --accessLoggerClassName=winstone.accesslog.SimpleAccessLogger --simpleAccessLogger.format=combined --simpleAccessLogger.file=/var/log/jenkins/access.log",' /etc/default/jenkins
 sed -i -E 's,^(/var/log/jenkins/)jenkins.log,\1*.log,' /etc/logrotate.d/jenkins
