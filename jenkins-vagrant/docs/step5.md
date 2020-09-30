@@ -1,4 +1,5 @@
-
+## Full Source References
+https://github.com/rgl/jenkins-vagrant
 
 #
 Make sure the package index cache is up-to-date before installing anything.
